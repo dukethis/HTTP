@@ -28,7 +28,7 @@ except Exception as e:
 # PARAMETERS /
 #////////////
 
-VERSION   = "0.15"
+VERSION   = "0.27"
 USERAGENT = f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)"
 METHOD    = "GET"
 REDIRECT  = 1
@@ -134,6 +134,14 @@ class Request(urllib3.PoolManager):
     def __str__(self):
         """ JSON Datagram """
         # Serialize response headers to JSON
+        req_headers = dict(self.headers)
+        for k,v in req_headers.items():
+            try:
+                v = json.loads(v)
+                req_headers[k] = v
+            except Exception as e:
+                pass
+        # Serialize response headers to JSON
         resp_headers = dict(self.response.headers)
         for k,v in resp_headers.items():
             try:
@@ -141,18 +149,19 @@ class Request(urllib3.PoolManager):
                 resp_headers[k] = v
             except Exception as e:
                 pass
+
         this = {
             "request": {
                 "url"     : self.url,
                 "method"  : self.method,
                 "charset" : self.charset,
-                "headers" : self.headers
+                "headers" : req_headers
             },
             "response": {
                 "status"  : self.response.status,
                 "time"    : self.response.time,
                 "headers" : resp_headers,
-                "body"    : self.content
+                "body"    : json.loads( self.content )
             }
         }
         return json.dumps( this, indent=2 )
@@ -191,9 +200,13 @@ if __name__ == '__main__':
 
     # HEADERS CONTRUCTION
     headers = {}
-    if args.headers:
-        for k,v in [ x.split(":") for x in args.headers ]:
-            headers.update({k:v})
+    for kv in args.headers:
+        if not kv.count(":"):
+            print(f"Warning: header {kv} not recognized")
+            continue
+        kv = kv.split(":")
+        k,v = kv[0], ':'.join(kv[1:])
+        headers.update({k:v})
 
     # IS PAYLOAD
     if args.data:
