@@ -110,6 +110,8 @@ class Request(urllib3.PoolManager):
             with open(filename,"wb") as fd:
                 fd.write(self.response.data)
             return "Saved image: %s"%(filename)
+        
+        content = None
         # CONTENT DECODING THE ASS
         try:
             content = self.response.data.decode(self.charset)
@@ -118,7 +120,7 @@ class Request(urllib3.PoolManager):
         
         # CONTENT DECODING THE ASS - FINAL
         if not self.charset:
-            for charset in CHARSET:
+            for charset in ["UTF-8","Latin-1"]:
                 try:
                     content = self.response.data.decode(charset)
                     self.charset = charset
@@ -127,8 +129,8 @@ class Request(urllib3.PoolManager):
 
         # HTML PARSE FOR HTML/RSS CONTENT
         if not content_type or any([ content_type.count(x) for x in ["text/html","rss","xml"]]):
-            data = BeautifulSoup(content,"lxml")
-            if tag:
+            data = BeautifulSoup(content,"lxml") if content else None
+            if data and tag:
                 content = []
                 for xtag in tag:
                     content.append( data.find_all(xtag) )
@@ -150,10 +152,10 @@ class Request(urllib3.PoolManager):
                     content = [ str(x) for x in content ]
             # DECODING IS COMING
             else: # TRY A STRING TYPE OR ELSE JSON
-                content = content.get_text() if type(content)!=str else json.dumps(content, indent=4)
+                content = content.get_text() if content and type(content)!=str else json.dumps(content, indent=2)
         # JSON IS DETECTED
         elif content_type.count("json"):
-            self.content = json.loads(content)
+            self.content = json.loads(content) if content else None
             return self
         # PLAIN TEXT CONTENT
         elif content_type.count("text/plain"):
