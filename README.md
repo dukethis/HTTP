@@ -1,11 +1,17 @@
 # HTTP
 HTTP.py : A simple HTTP request cli interface
 
-Yet another HTTP request tool. This one is derived from the python native *urllib3.PoolManager* (https://urllib3.readthedocs.io/en/latest/reference/urllib3.poolmanager.html).
+Yet another HTTP request tool. This one is derived from the python native **urllib3.PoolManager** (https://urllib3.readthedocs.io/en/latest/reference/urllib3.poolmanager.html).
 
 It provides a set of essential functionalities when requesting on the web.
 
-If you got there searching about a nice HTTP cli tool (but no necessarly python made) : check *curl* and the more recent *http*.
+If you got there searching about a nice HTTP cli tool (but no necessarly python made) : check **curl** and the more recent **http**.
+
+## Personnal usage
+
+I put this script in a directory which is part of the **PATH** environment variable. 
+It uses the **-x** execution mode like : `$ sudo chmod +x HTTP.py`.
+The script is callable from any other place when you have **PATH** loaded in your environment.
 
 ## Help Menu
 ```
@@ -74,5 +80,5 @@ $ HTTP.py HEAD dukeart.netlib.re
 ```
 
 Result is a javascript object notation with :
-  - A *request* part mainly composed of the request headers
-  - A *response* part composed by the response headers and the body content
+  - A **request** part mainly composed of metadata (request headers, charset, etc..)
+  - A **response** part composed by the response headers and the body content
