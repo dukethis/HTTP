@@ -95,12 +95,33 @@ class Request(urllib3.PoolManager):
             data = data.decode('utf-8')
         
         self.content = data
-        
-        if self.response.headers["Content-Type"].count("html"):
-            HTML = BeautifulSoup( data, 'lxml')
-            self.content = HTML
 
         return self.content
+    
+    def find_all(self, tags, attrs=[]):
+        """ Find all tags (list) with eventually a set of attribute keys to match (list) """
+        # Kick in the try/except directly
+        try:
+            html = BeautifulSoup( self.content, 'lxml')          
+        except Exception as e:
+            print(e)
+            return
+        # Gather tags list
+        data = []
+        for tag in html.find_all( tags ):
+            # If attributes list is set and the tag got it || OR no attributes list (all tags)
+            if not attrs or any([tag.get(u) for u in attrs]):
+                data.append( tag )
+        # Build up JSON        
+        output = []
+        for tag in data:
+            if not tag: continue
+            jtag = { "name" : tag.name }
+            jtag.update( tag.attrs )
+            jtag.update( { "content" : tag.get_text() } )
+            output.append( jtag )
+        self.content = output
+        return json.dumps( output, indent=2 )
     
     def __str__(self):
         """ JSON Datagram for the verbose mode """
@@ -127,8 +148,8 @@ if __name__ == '__main__':
     op = ArgumentParser(description="HTTP Request command", epilog=f"v{VERSION}")
     op.add_argument(dest="url",nargs="+")
     op.add_argument("-m","--method",   type=str, default="GET")
-    op.add_argument("-t","--tag",      type=str, nargs="+")
-    op.add_argument("-a","--attribute",type=str)
+    op.add_argument("-t","--tags",     type=str, nargs="+")
+    op.add_argument("-a","--attrs",    type=str, nargs="+")
     op.add_argument("-H","--headers",  type=str, nargs="*")
     op.add_argument("-d","--data",     type=str, nargs="*")
     op.add_argument("-p","--parse",    action="store_true")
@@ -177,5 +198,8 @@ if __name__ == '__main__':
         # TODO TAGS / ATTRIBUTES
         if args.raw:
             print( request.response.data.decode('utf-8') )
+        elif args.tags:
+            bot.find_all( args.tags, args.attrs )
+            print( bot )
         else:
-            print( request )
+            print( bot )
