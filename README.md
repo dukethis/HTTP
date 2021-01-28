@@ -75,4 +75,4 @@ $ HTTP.py HEAD dukeart.netlib.re
 
 Result is a javascript object notation with :
   - A *request* part mainly composed of the request headers
-  - A *response* part composed by the request headers and the body content
+  - A *response* part composed by the response headers and the body content
