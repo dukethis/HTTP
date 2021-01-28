@@ -9,9 +9,9 @@ If you got there searching about a nice HTTP cli tool (but no necessarly python 
 
 ## Personal usage
 
-Put this script in a directory which is part of the **PATH** environment variable. 
-Set the **-x** execution mode on the script : `$ sudo chmod +x HTTP.py`.
-The script is callable from any other place when you have **PATH** loaded in your environment.
+  - Put this script in a directory which is part of the **PATH** environment variable. 
+  - Set the **-x** execution mode on the script : `$ sudo chmod +x HTTP.py`.
+  - The script is callable from any other place when you have **PATH** loaded in your environment.
 
 ## Help Menu
 ```
