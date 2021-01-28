@@ -7,10 +7,10 @@ It provides a set of essential functionalities when requesting on the web.
 
 If you got there searching about a nice HTTP cli tool (but no necessarly python made) : check **curl** and the more recent **http**.
 
-## Personnal usage
+## Personal usage
 
-I put this script in a directory which is part of the **PATH** environment variable. 
-It uses the **-x** execution mode like : `$ sudo chmod +x HTTP.py`.
+Put this script in a directory which is part of the **PATH** environment variable. 
+Set the **-x** execution mode on the script : `$ sudo chmod +x HTTP.py`.
 The script is callable from any other place when you have **PATH** loaded in your environment.
 
 ## Help Menu
