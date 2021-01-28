@@ -200,17 +200,17 @@ if __name__ == '__main__':
             headers.update({"Content-Type":"application/x-www-urlencoded"})
             urls = [ url+"?"+"&".join(args.data) for url in urls ]
 
-    # ALL IN ONE
+    # FOR EACH GIVEN URLS
     for url in urls:
         request = bot.get( url     = url,
                            method  = args.method,
                            headers = headers,
                            body    = body_data)
-        # TODO TAGS / ATTRIBUTES
-        if args.raw:
-            print( request.response.data.decode('utf-8') )
-        elif args.tags:
+        # TAGS/ATTRS PARSING
+        if args.tags:
             bot.find_all( args.tags, args.attrs )
-            print( bot )
+        # RESPONSE ONLY ('RAW')
+        if args.raw:
+            print( json.dumps( bot.content, indent=2 ) )
         else:
             print( bot )
