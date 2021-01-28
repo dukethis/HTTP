@@ -27,17 +27,18 @@ USERAGENT = f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)"
 METHOD    = "GET"
 REDIRECT  = 1
 TIMEOUT   = 5
-CHARSET   = "UTF-8"
+CHARSET   = "utf-8"
 
 # CLASS INTERFACE / OVERLOOOAD IS COMING
 class Request(urllib3.PoolManager):
     """ Please refer help(urllib3.PoolManager) for more details """
     def __init__(self,url=None,**kargs):
         HEADERS = {
-            "User-Agent" : USERAGENT
+            "User-Agent"   : USERAGENT,
+            "Content-Type" : "application/json"
         }
         HEADERS = HEADERS.update(kargs["headers"]) if "headers" in kargs.keys() else HEADERS
-        
+
         urllib3.PoolManager.__init__(
             self,
             cert_reqs = 'CERT_REQUIRED',
@@ -94,13 +95,12 @@ class Request(urllib3.PoolManager):
         self.response.time = round(tx,7)
 
         # CONTENT TYPE RETRIEVAL
-        content_type = self.response.headers["Content-Type"] if "Content-Type" in self.response.headers else None
-        charset = re.findall("charset=[^;]+",content_type) if content_type else "utf-8"
+        content_type = headers["Content-Type"] if "Content-Type" in headers else None
+        charset = re.findall("charset=[^;]+",content_type) if content_type else self.charset
         if type(charset)==list and len(charset)>0:
             self.charset = charset[0].split("=")[1]
         else:
             self.charset = charset
-            
         # IMAGE DOWNLOAD
         if content_type and content_type.count("image/"):
             ext = content_type.split("image/")[-1]
@@ -110,22 +110,22 @@ class Request(urllib3.PoolManager):
             with open(filename,"wb") as fd:
                 fd.write(self.response.data)
             return "Saved image: %s"%(filename)
-        
+
         content = None
         # CONTENT DECODING THE ASS
         try:
             content = self.response.data.decode(self.charset)
         except Exception as e:
-            self.charset = None
-        
+            self.charset = CHARSET
+
         # CONTENT DECODING THE ASS - FINAL
         if not self.charset:
-            for charset in ["UTF-8","Latin-1"]:
+            for charset in ["UTF-8","ISO-8859-1","Latin-1"]:
                 try:
                     content = self.response.data.decode(charset)
                     self.charset = charset
                 except Exception as e:
-                    self.charset = "Unknown"
+                    self.charset = CHARSET
 
         # HTML PARSE FOR HTML/RSS CONTENT
         if not content_type or any([ content_type.count(x) for x in ["text/html","rss","xml"]]):
@@ -140,7 +140,7 @@ class Request(urllib3.PoolManager):
                 content = ncontent
                 # OPTION -a: SEARCH FOR A SPECIFIC TAG ATTRIBUTE
                 if attr:
-                    # USING A KEY=VALUE SYNTAX TO TARGET A SPECIFIC ATTRIBUTE'S VALUE 
+                    # USING A KEY=VALUE SYNTAX TO TARGET A SPECIFIC ATTRIBUTE'S VALUE
                     if attr.count("="):
                         attr,val = attr.split("=")
                         content = [ str(x) for x in content if x.get(attr) and x.get(attr)==val ]
@@ -192,7 +192,7 @@ class Request(urllib3.PoolManager):
     def write_rssfile(self,url):
         with open(self.rssfile,"a") as fd:
             fd.write("%s\n"%url)
-            
+
     def catch_rss(self):
         if "Content-Type" in self.response.headers.keys() and any(self.response.headers["Content-Type"].count(x) for x in [
             "xml","rss"
@@ -216,13 +216,13 @@ if __name__ == '__main__':
     op.add_argument("-m","--method",   type=str, default="GET")
     op.add_argument("-t","--tag",      type=str, nargs="+")
     op.add_argument("-a","--attribute",type=str)
-    op.add_argument("-H","--header",   type=str, nargs="*")
+    op.add_argument("-H","--headers",  type=str, nargs="*")
     op.add_argument("-d","--data",     type=str, nargs="*")
     op.add_argument("-p","--parse",    action="store_true")
     op.add_argument("-r","--raw",      action="store_true")
-    
+
     args = op.parse_args()
-    req = Request()
+    req = Request( charset="utf-8" )
 
     # EASY NOTATION: HTTP METHOD IS CATCHED AND REMOVED FROM URL LIST
     body_data = {}
@@ -238,22 +238,21 @@ if __name__ == '__main__':
 
     # HEADERS CONTRUCTION
     headers = {}
-    if args.header:
-        for k,v in [ x.split("=") if x.count("=") else x.split(":") for x in args.header ]:
+    if args.headers:
+        for k,v in [ x.split(":") for x in args.headers ]:
             headers.update({k:v})
 
     # TEST PAYLOAD PRESENCE
     if args.data:
         if "Content-Type" in headers.keys() and headers["Content-Type"].count("json"):
-            try: 
+            try:
                 body_data = json.loads(args.data)
             except:
                 ## RCST JSON FROM ARGS
-                print(args.data)
-                for k,v in [ x.split("=") if x.count("=") else x.split(":") for x in args.data ]:
+                for k,v in [ x.split(":") for x in args.data ]:
                     body_data.update({k:v})
         else:
-            headers.update({"Content-Type":"application/x-www-urlencoded"})     
+            headers.update({"Content-Type":"application/x-www-urlencoded"})
             urls = [ url+"?"+"&".join(args.data) for url in urls ]
 
     # ALL IN ONE
@@ -267,6 +266,6 @@ if __name__ == '__main__':
                            body    = body_data)
 
         if args.raw:
-            print( request.response.data.decode('utf-8') )            
+            print( request.response.data.decode('utf-8') )
         else:
             print( request )
