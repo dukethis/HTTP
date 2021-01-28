@@ -54,19 +54,10 @@ class Request(urllib3.PoolManager):
         self.content  = None
 
     def get(self,url=None,method=None,tag=None,body=None,parse=0,attr=None,headers={},verbose=0):
-        """ Request method:
-            - url
-            - method    (HTTP)
-            - headers   (HTTP)
-            - tag       (HTML/RSS)
-            - attr      (HTML)
-            - body      (PAYLOAD for POST,PUT)
-            - parse     (PRINT TEXT CONTENT)
-            - verbose   (PRINT ALL REQUEST)
-        """
+        """ Main request method """
         # METHOD/URL OVERWRITING
         self.method = method if method != None else self.method
-        self.url    = url    if url != None    else self.url
+        self.url    = url    if    url != None else self.url
 
         # REQUEST HEADERS
         self.headers.update ( headers )
@@ -92,85 +83,25 @@ class Request(urllib3.PoolManager):
                 body     = body)
         tx = time.time()-tx
 
-        self.response.time = round(tx,7)
+        self.response.time = round(tx,5)
 
         # CONTENT TYPE RETRIEVAL
-        content_type = headers["Content-Type"] if "Content-Type" in headers else None
-        charset = re.findall("charset=[^;]+",content_type) if content_type else self.charset
-        if type(charset)==list and len(charset)>0:
-            self.charset = charset[0].split("=")[1]
-        else:
-            self.charset = charset
-        # IMAGE DOWNLOAD
-        if content_type and content_type.count("image/"):
-            ext = content_type.split("image/")[-1]
-            ext = ext.split(";")[0]
-            if ext in ["exe","sh","dll"]: return "Skip special extension "+ext
-            filename = self.response.headers["Content-Disposition"].split(";")[-1].replace("filename=","").strip()
-            with open(filename,"wb") as fd:
-                fd.write(self.response.data)
-            return "Saved image: %s"%(filename)
-
-        content = None
-        # CONTENT DECODING THE ASS
+        data = self.response.data
+        
         try:
-            content = self.response.data.decode(self.charset)
+            JSON = json.loads( data )
+            data = json.dumps( JSON, indent=2)
         except Exception as e:
-            self.charset = CHARSET
+            data = data.decode('utf-8')
+        
+        self.content = data
+        
+        if self.response.headers["Content-Type"].count("html"):
+            HTML = BeautifulSoup( data, 'lxml')
+            self.content = HTML
 
-        # CONTENT DECODING THE ASS - FINAL
-        if not self.charset:
-            for charset in ["UTF-8","ISO-8859-1","Latin-1"]:
-                try:
-                    content = self.response.data.decode(charset)
-                    self.charset = charset
-                except Exception as e:
-                    self.charset = CHARSET
-
-        # HTML PARSE FOR HTML/RSS CONTENT
-        if not content_type or any([ content_type.count(x) for x in ["text/html","rss","xml"]]):
-            data = BeautifulSoup(content,"lxml") if content else None
-            if data and tag:
-                content = []
-                for xtag in tag:
-                    content.append( data.find_all(xtag) )
-                ncontent = []
-                for u in zip(*content):
-                    ncontent.extend( u )
-                content = ncontent
-                # OPTION -a: SEARCH FOR A SPECIFIC TAG ATTRIBUTE
-                if attr:
-                    # USING A KEY=VALUE SYNTAX TO TARGET A SPECIFIC ATTRIBUTE'S VALUE
-                    if attr.count("="):
-                        attr,val = attr.split("=")
-                        content = [ str(x) for x in content if x.get(attr) and x.get(attr)==val ]
-                    # ELSE RETRIEVE ALL TAGS WITH ATTRIBUTE
-                    else:
-                        content = [ str(x.get(attr)) for x in content if x.get(attr) ]
-                # ELSE RETRIEVE ALL TAGS
-                else:
-                    content = [ str(x) for x in content ]
-            # DECODING IS COMING
-            else: # TRY A STRING TYPE OR ELSE JSON
-                content = content.get_text() if content and type(content)!=str else json.dumps(content, indent=2)
-        # JSON IS DETECTED
-        elif content_type.count("json"):
-            self.content = json.loads(content) if content else None
-            return self
-        # PLAIN TEXT CONTENT
-        elif content_type.count("text/plain"):
-            content = self.response.data.decode(self.charset)
-            self.content = content.strip()
-            return self
-        self.content = json.loads(content) if type(content)==str else content
-        return self
-
-    def get_headers(self):
-        return json.dumps( self.headers, indent=4 )
-
-    def get_response_headers(self):
-        return json.dumps( dict(self.response.headers), indent=4 )
-
+        return self.content
+    
     def __str__(self):
         """ JSON Datagram for the verbose mode """
         this = {
@@ -189,24 +120,6 @@ class Request(urllib3.PoolManager):
         }
         return json.dumps( this, indent=2 )
 
-    def write_rssfile(self,url):
-        with open(self.rssfile,"a") as fd:
-            fd.write("%s\n"%url)
-
-    def catch_rss(self):
-        if "Content-Type" in self.response.headers.keys() and any(self.response.headers["Content-Type"].count(x) for x in [
-            "xml","rss"
-        ]):
-            self.write_rssfile(self.url)
-            return True
-        else:
-            html = BeautifulSoup(self.response.data.decode(self.charset),"lxml")
-            for link in html.find_all('link'):
-                if link.get("type") == "application/rss+xml":
-                    self.write_rssfile(self.url+"/"+link.get("href"))
-                    return True
-        return False
-
 # CLI INTERFACE
 if __name__ == '__main__':
 
@@ -222,7 +135,7 @@ if __name__ == '__main__':
     op.add_argument("-r","--raw",      action="store_true")
 
     args = op.parse_args()
-    req = Request( charset="utf-8" )
+    bot = Request( charset="UTF-8" )
 
     # EASY NOTATION: HTTP METHOD IS CATCHED AND REMOVED FROM URL LIST
     body_data = {}
@@ -257,14 +170,11 @@ if __name__ == '__main__':
 
     # ALL IN ONE
     for url in urls:
-        request = req.get( url     = url,
+        request = bot.get( url     = url,
                            method  = args.method,
                            headers = headers,
-                           tag     = args.tag,
-                           parse   = args.parse,
-                           attr    = args.attribute,
                            body    = body_data)
-
+        # TODO TAGS / ATTRIBUTES
         if args.raw:
             print( request.response.data.decode('utf-8') )
         else:
