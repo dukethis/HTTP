@@ -133,6 +133,14 @@ class Request(urllib3.PoolManager):
     
     def __str__(self):
         """ JSON Datagram """
+        # Serialize response headers to JSON
+        resp_headers = dict(self.response.headers)
+        for k,v in resp_headers.items():
+            try:
+                v = json.loads(v)
+                resp_headers[k] = v
+            except Exception as e:
+                pass
         this = {
             "request": {
                 "url"     : self.url,
@@ -143,7 +151,7 @@ class Request(urllib3.PoolManager):
             "response": {
                 "status"  : self.response.status,
                 "time"    : self.response.time,
-                "headers" : dict(self.response.headers),
+                "headers" : resp_headers,
                 "body"    : self.content
             }
         }
