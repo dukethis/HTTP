@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 # coding: utf-8
 
+#///////////
+# IMPORTS /
+#/////////
+
 # BUILT IN PYTHON MODULES
 import re,sys,json,time
 from argparse import ArgumentParser
@@ -14,14 +18,16 @@ try:
     import urllib3,certifi
     from bs4 import BeautifulSoup
 except Exception as e:
-    # SIGNALING MISSING LIB
+    # COURTESY SIGNALING
     print(e)
     print("Python is missing ressources. Try $ sudo pip3 install certifi urllib3")
     sys.exit(1)
 
 
+#//////////////
+# PARAMETERS /
+#////////////
 
-# SCRIPT PARAMETERS
 VERSION   = "0.15"
 USERAGENT = f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)"
 METHOD    = "GET"
@@ -29,7 +35,9 @@ REDIRECT  = 1
 TIMEOUT   = 5
 CHARSET   = "utf-8"
 
-# CLASS INTERFACE / OVERLOOOAD IS COMING
+#////////////////////////////////////////////////
+# Request() CLASS OVERLOAD urllib3.PoolManager /
+#//////////////////////////////////////////////
 class Request(urllib3.PoolManager):
     """ Please refer help(urllib3.PoolManager) for more details """
     def __init__(self,url=None,**kargs):
@@ -124,7 +132,7 @@ class Request(urllib3.PoolManager):
         return json.dumps( output, indent=2 )
     
     def __str__(self):
-        """ JSON Datagram for the verbose mode """
+        """ JSON Datagram """
         this = {
             "request": {
                 "url"     : self.url,
@@ -141,7 +149,10 @@ class Request(urllib3.PoolManager):
         }
         return json.dumps( this, indent=2 )
 
-# CLI INTERFACE
+#/////////////////
+# CLI INTERFACE /
+#///////////////
+
 if __name__ == '__main__':
 
     # OPTION / ARGUMENT PARSER: DEFINE MORE IF NEEDED
@@ -176,7 +187,7 @@ if __name__ == '__main__':
         for k,v in [ x.split(":") for x in args.headers ]:
             headers.update({k:v})
 
-    # TEST PAYLOAD PRESENCE
+    # IS PAYLOAD
     if args.data:
         if "Content-Type" in headers.keys() and headers["Content-Type"].count("json"):
             try:
