@@ -150,6 +150,10 @@ class Request(urllib3.PoolManager):
             except Exception as e:
                 pass
 
+        if "Content-Type" in resp_headers.keys() and resp_headers["Content-Type"].count("json") :
+            body = json.loads( self.content ) if self.content else None
+        else:
+            body = str( self.content )
         this = {
             "request": {
                 "url"     : self.url,
@@ -161,7 +165,7 @@ class Request(urllib3.PoolManager):
                 "status"  : self.response.status,
                 "time"    : self.response.time,
                 "headers" : resp_headers,
-                "body"    : json.loads( self.content ) if self.content else None
+                "body"    : body
             }
         }
         return json.dumps( this, indent=2 )
@@ -216,7 +220,7 @@ if __name__ == '__main__':
                 body_data = json.loads(args.data)
             except:
                 ## RCST JSON FROM ARGS
-                for k,v in [ x.split(":") for x in args.data ]:
+                for k,v in [ x.split("=") if x.count('=') else x.split(":") for x in args.data ]:
                     body_data.update({k:v})
         else:
             headers.update({"Content-Type":"application/x-www-urlencoded"})
