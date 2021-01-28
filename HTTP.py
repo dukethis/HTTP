@@ -161,7 +161,7 @@ class Request(urllib3.PoolManager):
                 "status"  : self.response.status,
                 "time"    : self.response.time,
                 "headers" : resp_headers,
-                "body"    : json.loads( self.content )
+                "body"    : json.loads( self.content ) if self.content else None
             }
         }
         return json.dumps( this, indent=2 )
@@ -178,7 +178,7 @@ if __name__ == '__main__':
     op.add_argument("-m","--method",   type=str, default="GET")
     op.add_argument("-t","--tags",     type=str, nargs="+")
     op.add_argument("-a","--attrs",    type=str, nargs="+")
-    op.add_argument("-H","--headers",  type=str, nargs="*")
+    op.add_argument("-H","--headers",  type=str, nargs="+")
     op.add_argument("-d","--data",     type=str, nargs="*")
     op.add_argument("-p","--parse",    action="store_true")
     op.add_argument("-r","--raw",      action="store_true")
@@ -200,13 +200,14 @@ if __name__ == '__main__':
 
     # HEADERS CONTRUCTION
     headers = {}
-    for kv in args.headers:
-        if not kv.count(":"):
-            print(f"Warning: header {kv} not recognized")
-            continue
-        kv = kv.split(":")
-        k,v = kv[0], ':'.join(kv[1:])
-        headers.update({k:v})
+    if args.headers:
+        for kv in args.headers:
+            if not kv.count(":"):
+                print(f"Warning: header {kv} not recognized")
+                continue
+            kv = kv.split(":")
+            k,v = kv[0], ':'.join(kv[1:])
+            headers.update({k:v})
 
     # IS PAYLOAD
     if args.data:
