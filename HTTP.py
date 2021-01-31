@@ -184,7 +184,7 @@ if __name__ == '__main__':
     op.add_argument("-a","--attrs",    type=str, nargs="+")
     op.add_argument("-H","--headers",  type=str, nargs="+")
     op.add_argument("-d","--data",     type=str, nargs="*")
-    op.add_argument("-p","--parse",    action="store_true")
+#    op.add_argument("-p","--parse",    action="store_true")
     op.add_argument("-r","--raw",      action="store_true")
 
     args = op.parse_args()
@@ -220,8 +220,12 @@ if __name__ == '__main__':
                 body_data = json.loads(args.data)
             except:
                 ## RCST JSON FROM ARGS
-                for k,v in [ x.split("=") if x.count('=') else x.split(":") for x in args.data ]:
-                    body_data.update({k:v})
+                print( args.data )
+                for kv in [ x.split("=") if x.count('=') else x.split(":") for x in args.data ]:
+                    print(kv)
+                    if type(kv)==list and len(kv)==2:
+                        k,v = kv
+                        body_data.update({k:v})
         else:
             headers.update({"Content-Type":"application/x-www-urlencoded"})
             urls = [ url+"?"+"&".join(args.data) for url in urls ]
