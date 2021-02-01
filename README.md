@@ -1,7 +1,7 @@
 # HTTP
 HTTP.py : A simple HTTP request CLI
 
-Yet another HTTP request tool. This one is derived from the python native **urllib3.PoolManager** (https://urllib3.readthedocs.io/en/latest/reference/urllib3.poolmanager.html).
+Yet another HTTP request tool. This one is derived from the native python **urllib3.PoolManager** (https://urllib3.readthedocs.io/en/latest/reference/urllib3.poolmanager.html).
 
 It provides a set of essential functionalities when requesting on the web.
 
