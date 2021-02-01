@@ -28,21 +28,19 @@ except Exception as e:
 # PARAMETERS /
 #////////////
 
-VERSION   = "0.27"
-USERAGENT = f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)"
-METHOD    = "GET"
-REDIRECT  = 1
-TIMEOUT   = 5
-CHARSET   = "utf-8"
+VERSION = "0.28"
 
 #////////////////////////////////////////////////
 # Request() CLASS OVERLOAD urllib3.PoolManager /
 #//////////////////////////////////////////////
 class Request(urllib3.PoolManager):
-    """ Please refer help(urllib3.PoolManager) for more details """
-    def __init__(self,url=None,**kargs):
+
+    """ Please refer to help(urllib3.PoolManager) for more details """
+    
+    def __init__(self, url=None, default_method="GET", **kargs):
+        
         HEADERS = {
-            "User-Agent"   : USERAGENT,
+            "User-Agent"   : f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)",
             "Content-Type" : "application/json"
         }
         HEADERS = HEADERS.update(kargs["headers"]) if "headers" in kargs.keys() else HEADERS
@@ -54,14 +52,14 @@ class Request(urllib3.PoolManager):
             headers   = HEADERS
         )
         self.url      = url
-        self.method   = kargs["method"]   if "method"   in kargs.keys() else METHOD
-        self.redirect = kargs["redirect"] if "redirect" in kargs.keys() else REDIRECT
-        self.timeout  = kargs["timeout"]  if "timeout"  in kargs.keys() else TIMEOUT
-        self.charset  = kargs["charset"]  if "charset"  in kargs.keys() else CHARSET
+        self.method   = kargs["method"]   if "method"   in kargs.keys() else default_method
+        self.redirect = kargs["redirect"] if "redirect" in kargs.keys() else True
+        self.timeout  = kargs["timeout"]  if "timeout"  in kargs.keys() else 10
+        self.charset  = kargs["charset"]  if "charset"  in kargs.keys() else "UTF-8"
         self.response = None
         self.content  = None
 
-    def get(self,url=None,method=None,tag=None,body=None,parse=0,attr=None,headers={},verbose=0):
+    def get(self, url=None, method=None, body=None, headers={}):
         """ Main request method """
         # METHOD/URL OVERWRITING
         self.method = method if method != None else self.method
@@ -89,18 +87,18 @@ class Request(urllib3.PoolManager):
                 redirect = self.redirect,
                 headers  = headers,
                 body     = body)
+            
         tx = time.time()-tx
 
         self.response.time = round(tx,5)
 
-        # CONTENT TYPE RETRIEVAL
-        data = self.response.data
-        
+        # CONTENT RETRIEVAL
+        data = self.response.data.decode('utf-8')
         try:
             JSON = json.loads( data )
             data = json.dumps( JSON, indent=2)
         except Exception as e:
-            data = data.decode('utf-8')
+            print( e )
         
         self.content = data
 
@@ -133,38 +131,21 @@ class Request(urllib3.PoolManager):
     
     def __str__(self):
         """ JSON Datagram """
-        # Serialize response headers to JSON
-        req_headers = dict(self.headers)
-        for k,v in req_headers.items():
-            try:
-                v = json.loads(v)
-                req_headers[k] = v
-            except Exception as e:
-                pass
-        # Serialize response headers to JSON
-        resp_headers = dict(self.response.headers)
-        for k,v in resp_headers.items():
-            try:
-                v = json.loads(v)
-                resp_headers[k] = v
-            except Exception as e:
-                pass
-
-        if "Content-Type" in resp_headers.keys() and resp_headers["Content-Type"].count("json") :
-            body = json.loads( self.content ) if self.content else None
+        if self.response.headers["Content-Type"].count("json") :
+            body = json.loads( self.content )
         else:
-            body = str( self.content )
+            body = self.content
         this = {
             "request": {
                 "url"     : self.url,
                 "method"  : self.method,
                 "charset" : self.charset,
-                "headers" : req_headers
+                "headers" : dict(self.headers)
             },
             "response": {
                 "status"  : self.response.status,
                 "time"    : self.response.time,
-                "headers" : resp_headers,
+                "headers" : dict(self.response.headers),
                 "body"    : body
             }
         }
@@ -184,7 +165,6 @@ if __name__ == '__main__':
     op.add_argument("-a","--attrs",    type=str, nargs="+")
     op.add_argument("-H","--headers",  type=str, nargs="+")
     op.add_argument("-d","--data",     type=str, nargs="*")
-#    op.add_argument("-p","--parse",    action="store_true")
     op.add_argument("-r","--raw",      action="store_true")
 
     args = op.parse_args()
@@ -241,6 +221,6 @@ if __name__ == '__main__':
             bot.find_all( args.tags, args.attrs )
         # RESPONSE ONLY ('RAW')
         if args.raw:
-            print( json.dumps( bot.content, indent=2 ) )
+            print( bot.content )
         else:
             print( bot )
