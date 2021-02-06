@@ -11,7 +11,7 @@ from argparse import ArgumentParser
 
 # TO AVOID BROKEN PIPES
 from signal import signal, SIGPIPE, SIG_DFL
-signal(SIGPIPE,SIG_DFL)
+
 
 # THIRD PARTY PYTHON MODULES
 try:
@@ -38,18 +38,19 @@ class Request(urllib3.PoolManager):
     """ Please refer to help(urllib3.PoolManager) for more details """
     
     def __init__(self, url=None, default_method="GET", **kargs):
-        
-        HEADERS = {
+        """ Receive: url (mandatory) and default_method or keyword arguments (optionally) """
+        self.headers = {
             "User-Agent"   : f"HTTP.py/{VERSION} ; (source +https://github.com/dukethis/HTTP)",
             "Content-Type" : "application/json"
         }
-        HEADERS = HEADERS.update(kargs["headers"]) if "headers" in kargs.keys() else HEADERS
+        if "headers" in kargs.keys():
+            self.headers.update( kargs["headers"] )
 
         urllib3.PoolManager.__init__(
             self,
             cert_reqs = 'CERT_REQUIRED',
             ca_certs  = certifi.where(),
-            headers   = HEADERS
+            headers   = self.headers
         )
         self.url      = url
         self.method   = kargs["method"]   if "method"   in kargs.keys() else default_method
@@ -76,7 +77,7 @@ class Request(urllib3.PoolManager):
                 self.url,
                 timeout  = self.timeout,
                 redirect = self.redirect,
-                headers  = headers
+                headers  = self.headers
         )
         else:
             body = json.dumps(body)
@@ -85,7 +86,7 @@ class Request(urllib3.PoolManager):
                 self.url,
                 timeout  = self.timeout,
                 redirect = self.redirect,
-                headers  = headers,
+                headers  = self.headers,
                 body     = body)
             
         tx = time.time()-tx
@@ -169,7 +170,9 @@ if __name__ == '__main__':
 
     args = op.parse_args()
     bot = Request( charset="UTF-8" )
-
+    
+    signal(SIGPIPE,SIG_DFL)
+    
     # EASY NOTATION: HTTP METHOD IS CATCHED AND REMOVED FROM URL LIST
     body_data = {}
     urls  = []
@@ -212,10 +215,10 @@ if __name__ == '__main__':
 
     # FOR EACH GIVEN URLS
     for url in urls:
-        request = bot.get( url     = url,
-                           method  = args.method,
-                           headers = headers,
-                           body    = body_data)
+        bot.get( url     = url,
+                 method  = args.method,
+                 headers = headers,
+                 body    = body_data)
         # TAGS/ATTRS PARSING
         if args.tags:
             bot.find_all( args.tags, args.attrs )
