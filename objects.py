@@ -10,7 +10,7 @@
 import re,sys,json,time,urllib3
 
 # MODULE IMPORT
-from HTTP.params import *
+from params import *
 
 # THIRD PARTY PYTHON MODULES
 try:
