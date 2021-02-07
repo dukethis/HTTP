@@ -5,7 +5,7 @@
 # PARAMETERS /
 #////////////
 
-from params import *
+from HTTP.params import *
 
 print("__init__")
 print( VERSION )
