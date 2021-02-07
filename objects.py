@@ -93,7 +93,7 @@ class Request(urllib3.PoolManager):
             JSON = json.loads( data )
             data = json.dumps( JSON, indent=2)
         except Exception as e:
-            print( e )
+            #print( e )
             pass
         
         self.content = data
