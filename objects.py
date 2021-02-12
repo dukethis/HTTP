@@ -127,7 +127,7 @@ class Request(urllib3.PoolManager):
     
     def __str__(self):
         """ JSON Datagram """
-        if self.response.headers["Content-Type"].count("json") :
+        if "Content-Type" in self.response.headers.keys() and self.response.headers["Content-Type"].count("json") :
             body = json.loads( self.content )
         else:
             body = self.content
