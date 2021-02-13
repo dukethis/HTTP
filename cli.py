@@ -88,6 +88,9 @@ if __name__ == '__main__':
             bot.find_all( args.tags, args.attrs )
         # RESPONSE ONLY ('RAW' CONTENT)
         if args.raw:
-            print( bot.content )
+            if type(bot.content) == str:
+                print( bot.content )
+            else:
+                print( json.dumps( bot.content, indent=2) )
         else:
             print( bot )

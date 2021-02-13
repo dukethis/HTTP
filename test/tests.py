@@ -5,11 +5,11 @@
 # IMPORTS /
 #/////////
 
-import time,json,urllib3
-import HTTP.objects
+import os,time,json,urllib3
+import HTTP.objects, HTTP.cli
 
 def test_import():
-    import HTTP.objects
+    import HTTP.objects, HTTP.cli
     
 def test_init():
     bot = HTTP.objects.Request()
@@ -34,8 +34,54 @@ def test_get_content_type():
 def test_get_response_type():
     bot  = HTTP.objects.Request()
     bot.get( url="https://httpbin.org/get", method="GET", headers={"Content-Type":"application/json"} )
-    data = bot.content
-    data = json.loads(data)
+    data = json.loads(bot.content)
     assert type(data) == dict
 
+def test_post_response_type():
+    bot  = HTTP.objects.Request()
+    bot.get( url="https://httpbin.org/post", method="POST", headers={"Content-Type":"application/json"} )
+    data = json.loads(bot.content)
+    assert type(data) == dict
 
+def test_post_01():
+    bot  = HTTP.objects.Request()
+    bot.get( url="https://httpbin.org/post",
+             method="POST",
+             headers={"Content-Type":"application/json"})
+    data = json.loads(bot.content)
+    assert data["url"] == "https://httpbin.org/post"
+
+def test_post_02():
+    bot  = HTTP.objects.Request()
+    bot.get( url="https://httpbin.org/post",
+             method="POST",
+             headers={"Content-Type":"application/json"},
+             body={"test":"success"} )
+    data = json.loads(bot.content)
+    assert data["json"]["test"] == "success"
+
+
+def test_cli_sequence_01():
+    args = "GET httpbin.org/get"
+    code = os.system(f"HTTP {args}")
+    assert code == 0
+
+def test_cli_sequence_02():
+    args = "GET httpbin.org/get -r"
+    code = os.system(f"HTTP {args}")
+    assert code == 0
+
+def test_cli_sequence_03():
+    args = "GET httpbin.org/get -t a -r"
+    code = os.system(f"HTTP {args}")
+    assert code == 0
+
+def test_cli_sequence_04():
+    args = "GET httpbin.org/get -t a -a href -r"
+    code = os.system(f"HTTP {args}")
+    assert code == 0
+
+def test_cli_sequence_05():
+    args = "POST httpbin.org/post -d test=toto -r"
+    code = os.system(f"HTTP {args}")
+    assert code == 0

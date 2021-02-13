@@ -130,7 +130,7 @@ class Request(urllib3.PoolManager):
         if "Content-Type" in self.response.headers.keys() and self.response.headers["Content-Type"].count("json") :
             body = json.loads( self.content ) if self.content else None
         else:
-            body = self.content
+            body = self.content #json.dumps( self.content, indent=2) 
         this = {
             "request": {
                 "url"     : self.url,
