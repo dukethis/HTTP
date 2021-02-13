@@ -111,16 +111,20 @@ class Request(urllib3.PoolManager):
         # Gather tags list
         data = []
         for tag in html.find_all( tags ):
-            # If attributes list is set and the tag got it || OR no attributes list (all tags)
-            if not attrs or any([tag.get(u) for u in attrs]):
+            if attrs and len(attrs)>0 and any([tag.get(u) for u in attrs if tag.get(u)]):
+                data.append( {"name":tag.name, "attrs":{ u:tag.get(u) for u in attrs if tag.get(u)} } )
+            else:
                 data.append( tag )
         # Build up JSON        
         output = []
         for tag in data:
             if not tag: continue
-            jtag = { "name" : tag.name }
-            jtag.update( tag.attrs )
-            jtag.update( { "content" : tag.get_text() } )
+            if type(tag)==dict:
+                jtag = { "name" : tag["name"] }
+                jtag.update( tag["attrs"] )
+            else:
+                jtag = { "name" : tag.name }
+                jtag.update( tag.attrs )
             output.append( jtag )
         self.content = output
         return json.dumps( output, indent=2 )
