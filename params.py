@@ -2,4 +2,4 @@
 # coding: utf-8
 # GLOBAL PARAMETERS
 
-VERSION = "0.33"
+VERSION = "0.34"

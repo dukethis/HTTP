@@ -112,18 +112,20 @@ class Request(urllib3.PoolManager):
         data = []
         for tag in html.find_all( tags ):
             if attrs and len(attrs)>0 and any([tag.get(u) for u in attrs if tag.get(u)]):
-                data.append( {"name":tag.name, "attrs":{ u:tag.get(u) for u in attrs if tag.get(u)} } )
+                row = { "name":tag.name, "text":tag.text }
+                row.update( { u:tag.get(u) for u in attrs if tag.get(u) } )
+                data.append( row )
             else:
                 data.append( tag )
+
         # Build up JSON        
         output = []
         for tag in data:
             if not tag: continue
-            if type(tag)==dict:
-                jtag = { "name" : tag["name"] }
-                jtag.update( tag["attrs"] )
+            if type(tag) == dict:
+                jtag = tag
             else:
-                jtag = { "name" : tag.name }
+                jtag = { "name" : tag.name, "text" : tag.text }
                 jtag.update( tag.attrs )
             output.append( jtag )
         self.content = output
@@ -134,7 +136,7 @@ class Request(urllib3.PoolManager):
         if "Content-Type" in self.response.headers.keys() and self.response.headers["Content-Type"].count("json") :
             body = json.loads( self.content ) if self.content else None
         else:
-            body = self.content #json.dumps( self.content, indent=2) 
+            body = self.content
         this = {
             "request": {
                 "url"     : self.url,
